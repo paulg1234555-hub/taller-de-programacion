@@ -31,6 +31,8 @@ typedef struct {
 #endif
 
 
+
+
 funciones.h
 #ifndef FUNCIONES_H
 #define FUNCIONES_H
@@ -216,4 +218,13 @@ void registrarVenta(int idCliente, int idVehiculo, float precio) {
     fclose(fven);
 
     printf("Venta registrada con exito.\n");
+}
+
+
+main.c
+#include "funciones.h"
+
+int main() {
+    menu();
+    return 0;
 }
