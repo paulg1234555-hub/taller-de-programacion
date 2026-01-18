@@ -1,230 +1,178 @@
-estructuras.h
+Estructura de archivos
 
-#ifndef ESTRUCTURAS_H
-#define ESTRUCTURAS_H
+/proyecto
+│── main.c
+│── zona.h
+│── zona.c
+│── calculos.h
+│── calculos.c
+│── reporte.h
+│── reporte.c
 
-typedef struct {
-    int id;
-    char marca[20];
-    char modelo[20];
-    char tipo[15];
-    int anio;
-    float precio;
-    char estado[10];
-    int disponible;
-} Vehiculo;
+Zona.h
+#ifndef ZONA_H
+#define ZONA_H
 
-typedef struct {
-    int id;
-    char nombre[40];
-    int edad;
-    float presupuesto;
-} Cliente;
+#define ZONAS 5
+#define DIAS 30
 
-typedef struct {
-    int idVenta;
-    int idCliente;
-    int idVehiculo;
-    float precioVenta;
-} Venta;
+// Límites OMS (referenciales)
+#define LIM_CO2 400
+#define LIM_NO2 200
+#define LIM_PM25 25
 
-#endif
+struct Zona {
+    char nombre[30];
+    float co2[DIAS];
+    float no2[DIAS];
+    float pm25[DIAS];
+};
 
-
-
-
-funciones.h
-#ifndef FUNCIONES_H
-#define FUNCIONES_H
-
-void menu();
-void registrarVehiculo();
-void listarVehiculos();
-void registrarCliente();
-void buscarVehiculos(float presupuesto);
-void registrarVenta(int idCliente, int idVehiculo, float precio);
+void ingresarDatos(struct Zona zonas[]);
+void mostrarResultados(struct Zona zonas[]);
 
 #endif
 
+Cálculos.h
+#ifndef CALCULOS_H
+#define CALCULOS_H
 
-funciones.c
+float promedio(float datos[]);
+float prediccion(float datos[]);
+
+#endif
+
+Reporte.h
+#ifndef REPORTE_H
+#define REPORTE_H
+
+#include "zona.h"
+
+void guardarReporte(struct Zona zonas[]);
+
+#endif
+
+Zona.c
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "estructuras.h"
-#include "funciones.h"
+#include "zona.h"
+#include "calculos.h"
 
-#define VEHICULOS_FILE "vehiculos.dat"
-#define CLIENTES_FILE  "clientes.dat"
-#define VENTAS_FILE    "ventas.dat"
+void ingresarDatos(struct Zona zonas[]) {
+    for (int i = 0; i < ZONAS; i++) {
+        printf("\n--- Ingreso de datos para %s ---\n", zonas[i].nombre);
+        for (int d = 0; d < DIAS; d++) {
+            printf("Dia %d - Dioxido de Carbono (CO2): ", d + 1);
+            scanf("%f", &zonas[i].co2[d]);
 
-// ---------------- MENU ----------------
-void menu() {
-    int opcion;
-    do {
-        printf("\n===== RUEDAS DE ORO =====\n");
-        printf("1. Registrar vehiculo\n");
-        printf("2. Listar vehiculos\n");
-        printf("3. Registrar cliente\n");
-        printf("4. Buscar vehiculos (Caso Ruben)\n");
-        printf("0. Salir\n");
-        printf("Opcion: ");
-        scanf("%d", &opcion);
+            printf("Dia %d - Dioxido de Nitrogeno (NO2): ", d + 1);
+            scanf("%f", &zonas[i].no2[d]);
 
-        switch (opcion) {
-            case 1: registrarVehiculo(); break;
-            case 2: listarVehiculos(); break;
-            case 3: registrarCliente(); break;
-            case 4: buscarVehiculos(14000); break;
-            case 0: printf("Saliendo...\n"); break;
-            default: printf("Opcion invalida\n");
-        }
-    } while (opcion != 0);
-}
-
-// ---------------- VEHICULOS ----------------
-void registrarVehiculo() {
-    FILE *f = fopen(VEHICULOS_FILE, "ab");
-    Vehiculo v;
-
-    if (!f) return;
-
-    printf("ID: ");
-    scanf("%d", &v.id);
-    printf("Marca: ");
-    scanf("%s", v.marca);
-    printf("Modelo: ");
-    scanf("%s", v.modelo);
-    printf("Tipo: ");
-    scanf("%s", v.tipo);
-    printf("Anio: ");
-    scanf("%d", &v.anio);
-    printf("Precio: ");
-    scanf("%f", &v.precio);
-    printf("Estado (nuevo/usado): ");
-    scanf("%s", v.estado);
-
-    v.disponible = 1;
-    fwrite(&v, sizeof(Vehiculo), 1, f);
-    fclose(f);
-
-    printf("Vehiculo registrado.\n");
-}
-
-void listarVehiculos() {
-    FILE *f = fopen(VEHICULOS_FILE, "rb");
-    Vehiculo v;
-
-    if (!f) return;
-
-    while (fread(&v, sizeof(Vehiculo), 1, f)) {
-        if (v.disponible) {
-            printf("ID:%d | %s %s | %s | $%.2f\n",
-                   v.id, v.marca, v.modelo, v.tipo, v.precio);
+            printf("Dia %d - Material Particulado PM2.5: ", d + 1);
+            scanf("%f", &zonas[i].pm25[d]);
         }
     }
-    fclose(f);
 }
 
-// ---------------- CLIENTES ----------------
-void registrarCliente() {
-    FILE *f = fopen(CLIENTES_FILE, "ab");
-    Cliente c;
+void mostrarResultados(struct Zona zonas[]) {
+    for (int i = 0; i < ZONAS; i++) {
+        float promCO2 = promedio(zonas[i].co2);
+        float promNO2 = promedio(zonas[i].no2);
+        float promPM  = promedio(zonas[i].pm25);
 
-    if (!f) return;
+        float predCO2 = prediccion(zonas[i].co2);
+        float predNO2 = prediccion(zonas[i].no2);
+        float predPM  = prediccion(zonas[i].pm25);
 
-    printf("ID: ");
-    scanf("%d", &c.id);
-    printf("Nombre: ");
-    scanf(" %[^\n]", c.nombre);
-    printf("Edad: ");
-    scanf("%d", &c.edad);
-    printf("Presupuesto: ");
-    scanf("%f", &c.presupuesto);
+        printf("\n===== %s =====\n", zonas[i].nombre);
 
-    fwrite(&c, sizeof(Cliente), 1, f);
-    fclose(f);
+        printf("Promedio Dioxido de Carbono (CO2): %.2f\n", promCO2);
+        printf("Promedio Dioxido de Nitrogeno (NO2): %.2f\n", promNO2);
+        printf("Promedio Material Particulado PM2.5: %.2f\n", promPM);
 
-    printf("Cliente registrado.\n");
-}
+        printf("Prediccion Dioxido de Carbono (CO2): %.2f\n", predCO2);
+        printf("Prediccion Dioxido de Nitrogeno (NO2): %.2f\n", predNO2);
+        printf("Prediccion Material Particulado PM2.5: %.2f\n", predPM);
 
-// ---------------- BUSQUEDA Y VENTA ----------------
-void buscarVehiculos(float presupuesto) {
-    FILE *f = fopen(VEHICULOS_FILE, "rb");
-    Vehiculo v;
-    int encontrado = 0;
-
-    if (!f) return;
-
-    printf("\nCamionetas Chevrolet usadas <= $%.2f\n", presupuesto);
-
-    while (fread(&v, sizeof(Vehiculo), 1, f)) {
-        if (v.disponible &&
-            strcmp(v.tipo, "camioneta") == 0 &&
-            strcmp(v.estado, "usado") == 0 &&
-            strcmp(v.marca, "Chevrolet") == 0 &&
-            v.precio <= presupuesto) {
-
-            printf("ID:%d | %s %s | $%.2f\n",
-                   v.id, v.marca, v.modelo, v.precio);
-            encontrado = 1;
+        if (predCO2 > LIM_CO2 || predNO2 > LIM_NO2 || predPM > LIM_PM25) {
+            printf("⚠ ALERTA: Niveles de contaminacion elevados\n");
+            printf("- Reducir trafico vehicular\n");
+            printf("- Evitar actividades al aire libre\n");
+            printf("- Controlar emisiones industriales\n");
+        } else {
+            printf("Niveles de contaminacion aceptables.\n");
         }
     }
-    fclose(f);
+}
 
-    if (!encontrado) {
-        printf("No hay coincidencias.\n");
+Calculos.c
+#include "calculos.h"
+#include "zona.h"
+
+float promedio(float datos[]) {
+    float suma = 0;
+    for (int i = 0; i < DIAS; i++) {
+        suma += datos[i];
+    }
+    return suma / DIAS;
+}
+
+float prediccion(float datos[]) {
+    float suma = 0, pesoTotal = 0;
+    int peso = 1;
+
+    for (int i = 0; i < DIAS; i++) {
+        suma += datos[i] * peso;
+        pesoTotal += peso;
+        peso++;
+    }
+    return suma / pesoTotal;
+}
+
+Reporte.c
+#include <stdio.h>
+#include "reporte.h"
+#include "calculos.h"
+
+void guardarReporte(struct Zona zonas[]) {
+    FILE *archivo = fopen("reporte_contaminacion.txt", "w");
+
+    if (archivo == NULL) {
+        printf("Error al crear el archivo.\n");
         return;
     }
 
-    int idCliente, idVehiculo;
-    float precio;
-
-    printf("ID Cliente: ");
-    scanf("%d", &idCliente);
-    printf("ID Vehiculo: ");
-    scanf("%d", &idVehiculo);
-    printf("Precio venta: ");
-    scanf("%f", &precio);
-
-    registrarVenta(idCliente, idVehiculo, precio);
-}
-
-void registrarVenta(int idCliente, int idVehiculo, float precio) {
-    FILE *fv = fopen(VEHICULOS_FILE, "rb+");
-    FILE *fven = fopen(VENTAS_FILE, "ab");
-    Vehiculo v;
-    Venta ven;
-
-    if (!fv || !fven) return;
-
-    while (fread(&v, sizeof(Vehiculo), 1, fv)) {
-        if (v.id == idVehiculo && v.disponible) {
-            v.disponible = 0;
-            fseek(fv, -sizeof(Vehiculo), SEEK_CUR);
-            fwrite(&v, sizeof(Vehiculo), 1, fv);
-            break;
-        }
+    for (int i = 0; i < ZONAS; i++) {
+        fprintf(archivo, "Zona: %s\n", zonas[i].nombre);
+        fprintf(archivo, "Promedio CO2: %.2f\n", promedio(zonas[i].co2));
+        fprintf(archivo, "Promedio NO2: %.2f\n", promedio(zonas[i].no2));
+        fprintf(archivo, "Promedio PM2.5: %.2f\n", promedio(zonas[i].pm25));
+        fprintf(archivo, "Prediccion CO2: %.2f\n", prediccion(zonas[i].co2));
+        fprintf(archivo, "Prediccion NO2: %.2f\n", prediccion(zonas[i].no2));
+        fprintf(archivo, "Prediccion PM2.5: %.2f\n\n", prediccion(zonas[i].pm25));
     }
 
-    ven.idVenta = rand() % 10000;
-    ven.idCliente = idCliente;
-    ven.idVehiculo = idVehiculo;
-    ven.precioVenta = precio;
-
-    fwrite(&ven, sizeof(Venta), 1, fven);
-
-    fclose(fv);
-    fclose(fven);
-
-    printf("Venta registrada con exito.\n");
+    fclose(archivo);
 }
 
-
-main.c
-#include "funciones.h"
+Main.c
+#include <stdio.h>
+#include "zona.h"
+#include "reporte.h"
 
 int main() {
-    menu();
+
+    struct Zona zonas[ZONAS] = {
+        {"Zona Norte"},
+        {"Zona Sur"},
+        {"Zona Este"},
+        {"Zona Oeste"},
+        {"Zona Centro"}
+    };
+
+    ingresarDatos(zonas);
+    mostrarResultados(zonas);
+    guardarReporte(zonas);
+
+    printf("\nPrograma finalizado correctamente.\n");
     return 0;
 }
